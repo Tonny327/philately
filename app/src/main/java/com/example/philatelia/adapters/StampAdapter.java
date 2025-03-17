@@ -1,17 +1,21 @@
 package com.example.philatelia.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.philatelia.R;
+import com.example.philatelia.helpers.CartManager;
 import com.example.philatelia.models.Stamp;
 
 import java.util.List;
@@ -35,20 +39,32 @@ public class StampAdapter extends RecyclerView.Adapter<StampAdapter.ViewHolder> 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Stamp stamp = stamps.get(position);
+
         holder.catalogNumberTextView.setText("Номер: " + stamp.getCatalogNumber());
         holder.nameTextView.setText("Марка «" + stamp.getName() + "»");
         holder.releaseDateTextView.setText("Дата выпуска: " + stamp.getReleaseDate());
 
-        // Проверяем, есть ли цена, если нет - ставим "N"
         String price = (stamp.getPrice() == null || stamp.getPrice().isEmpty()) ? "N" : stamp.getPrice();
-        holder.priceTextView.setText("Цена: " + price);
+        holder.priceTextView.setText("Номинал: " + price + " BYN");
 
-        // Загружаем изображение с помощью Glide
         Glide.with(context)
                 .load(stamp.getImage())
-                .placeholder(R.drawable.placeholder) // Заглушка, если картинка не загрузится
+                .placeholder(R.drawable.placeholder)
                 .into(holder.imageView);
+
+        // ✅ Проверяем, не `null` ли кнопка перед `setOnClickListener`
+        if (holder.addToCartButton != null) {
+            holder.addToCartButton.setOnClickListener(v -> {
+                CartManager cartManager = new CartManager(context);
+                cartManager.addStampToCart(stamp);
+                Toast.makeText(context, "Марка добавлена в корзину!", Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            Log.e("StampAdapter", "❌ Ошибка: addToCartButton == null!");
+        }
     }
+
+
 
     @Override
     public int getItemCount() {
@@ -58,6 +74,7 @@ public class StampAdapter extends RecyclerView.Adapter<StampAdapter.ViewHolder> 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView catalogNumberTextView, nameTextView, releaseDateTextView, priceTextView;
         ImageView imageView;
+        Button addToCartButton;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -66,7 +83,9 @@ public class StampAdapter extends RecyclerView.Adapter<StampAdapter.ViewHolder> 
             releaseDateTextView = itemView.findViewById(R.id.releaseDateTextView);
             priceTextView = itemView.findViewById(R.id.priceTextView);
             imageView = itemView.findViewById(R.id.imageView);
+            addToCartButton = itemView.findViewById(R.id.btnAddToCartStamp); // ✅ Обязательно!
         }
     }
+
 }
 

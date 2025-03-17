@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1020230572908",
+    "project_id": "philatelia-1a992",
+    "storage_bucket": "philatelia-1a992.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1020230572908:android:00ca5182737b54a952b149",
+        "android_client_info": {
+          "package_name": "com.example.philatelia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1020230572908-njaq705n8a8nvcpr0ji9ng9cuo0bvmgq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.philatelia",
+            "certificate_hash": "0dc1bcbd582306492f62f0e671559d30e970d04d"
+          }
+        },
+        {
+          "client_id": "1020230572908-l6qlaokuesmpt15mho2of6a4o5b1a7df.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAzGTMVa67QYZ7xjQ7AG7NF6PPdztzvvg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1020230572908-l6qlaokuesmpt15mho2of6a4o5b1a7df.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,27 +1,42 @@
 package com.example.philatelia;
 
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import com.example.philatelia.fragments.CatalogFragment;
 import com.example.philatelia.fragments.PostcrossingFragment;
-import com.example.philatelia.fragments.ReviewsFragment;
+import com.example.philatelia.fragments.CartFragment;
 import com.example.philatelia.fragments.HelperFragment;
-import com.example.philatelia.fragments.LinksFragment;
+import com.example.philatelia.fragments.UserFragment;
+import com.example.philatelia.R;
+
 
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNavigationView;
+    private FirebaseAuth auth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        auth = FirebaseAuth.getInstance();
+        FirebaseUser user = auth.getCurrentUser();
+
+        // Если пользователь НЕ вошел – отправляем его на экран авторизации
+        if (user == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
 
         bottomNavigationView = findViewById(R.id.bottom_navigation);
 
@@ -35,18 +50,17 @@ public class MainActivity extends AppCompatActivity {
         // Слушатель кликов на пункты меню
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
-            int id = item.getItemId();
 
-            if (id == R.id.nav_catalog) {
+            if (item.getItemId() == R.id.nav_catalog) {
                 selectedFragment = new CatalogFragment();
-            } else if (id == R.id.nav_postcrossing) {
+            } else if (item.getItemId() == R.id.nav_postcrossing) {
                 selectedFragment = new PostcrossingFragment();
-            } else if (id == R.id.nav_reviews) {
-                selectedFragment = new ReviewsFragment();
-            } else if (id == R.id.nav_helper) {
+            } else if (item.getItemId() == R.id.nav_cart) {
+                selectedFragment = new CartFragment();
+            } else if (item.getItemId() == R.id.nav_helper) {
                 selectedFragment = new HelperFragment();
-            } else if (id == R.id.nav_links) {
-                selectedFragment = new LinksFragment();
+            } else if (item.getItemId() == R.id.nav_user) {
+                selectedFragment = new UserFragment();
             }
 
             if (selectedFragment != null) {
@@ -55,16 +69,13 @@ public class MainActivity extends AppCompatActivity {
                         .replace(R.id.fragment_container, selectedFragment)
                         .commit();
             }
-
             return true;
-
         });
 
-
-        // При старте приложения сразу выберем пункт "Каталоги"
+        // При старте приложения сразу выбираем пункт "Каталог"
         bottomNavigationView.setSelectedItemId(R.id.nav_catalog);
-
     }
+
     @Override
     public void onBackPressed() {
         if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
@@ -73,5 +84,5 @@ public class MainActivity extends AppCompatActivity {
             super.onBackPressed(); // Если фрагментов нет, выходим
         }
     }
-
 }
+

@@ -45,8 +45,17 @@
             android:id="@+id/priceTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Цена"
+            android:text="Номинал"
             android:textSize="14sp" />
+
+        <!-- Кнопка "Добавить в корзину" -->
+        <Button
+            android:id="@+id/btnAddToCartStamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="в корзину"
+            android:backgroundTint="@color/bottom_nav_active"
+            android:textColor="@android:color/white"/>
     </LinearLayout>
 </LinearLayout>
 

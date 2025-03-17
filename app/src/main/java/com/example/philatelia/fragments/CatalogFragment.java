@@ -117,11 +117,14 @@ public class CatalogFragment extends Fragment {
             Log.e("CatalogFragment", "❌ Ошибка: JSON-файл `stamps_set_by_year.json` пустой или неправильно отформатирован!");
             return null;
         }
+
         List<StampSet> allStampSets = new ArrayList<>();
 
-        // Проходим по всем годам и добавляем все наборы
+        // ✅ Добавляем год вручную из ключа JSON
         for (String year : stampSetsByYear.keySet()) {
-            allStampSets.addAll(stampSetsByYear.get(year));
+            for (StampSet set : stampSetsByYear.get(year)) {
+                allStampSets.add(new StampSet(set.getName(), set.getPrice(), set.getImage(), set.getImage2(), year));
+            }
         }
 
         if (allStampSets.isEmpty()) {
@@ -131,6 +134,7 @@ public class CatalogFragment extends Fragment {
 
         return allStampSets;
     }
+
 
 
     private Map<String, List<Stamp>> loadStamps() {

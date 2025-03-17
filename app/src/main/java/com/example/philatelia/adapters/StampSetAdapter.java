@@ -4,14 +4,17 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.philatelia.R;
+import com.example.philatelia.helpers.CartManager;
 import com.example.philatelia.models.StampSet;
 
 import java.util.List;
@@ -55,7 +58,17 @@ public class StampSetAdapter extends RecyclerView.Adapter<StampSetAdapter.ViewHo
                 .placeholder(R.drawable.placeholder)
                 .into(holder.imageView2);
 
-        holder.itemView.setOnClickListener(v -> listener.onItemClick(String.valueOf(2000 + position))); // Передаём год
+        // ✅ Проверяем, что кнопка не null перед назначением слушателя
+        if (holder.addToCartButton != null) {
+            holder.addToCartButton.setOnClickListener(v -> {
+                CartManager cartManager = new CartManager(context);
+                cartManager.addStampSetToCart(stampSet);
+                Toast.makeText(context, "Набор добавлен в корзину!", Toast.LENGTH_SHORT).show();
+            });
+        }
+        holder.itemView.setOnClickListener(v -> listener.onItemClick(stampSet.getYear()));
+
+
     }
 
     @Override
@@ -66,6 +79,7 @@ public class StampSetAdapter extends RecyclerView.Adapter<StampSetAdapter.ViewHo
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView nameTextView, priceTextView;
         ImageView imageView1, imageView2;
+        Button addToCartButton;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -73,6 +87,7 @@ public class StampSetAdapter extends RecyclerView.Adapter<StampSetAdapter.ViewHo
             priceTextView = itemView.findViewById(R.id.priceTextView);
             imageView1 = itemView.findViewById(R.id.imageView1);
             imageView2 = itemView.findViewById(R.id.imageView2);
+            addToCartButton = itemView.findViewById(R.id.btnAddToCartSet); // ✅ Правильное инициализирование
         }
     }
 }
