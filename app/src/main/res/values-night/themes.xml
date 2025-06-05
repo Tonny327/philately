@@ -7,6 +7,7 @@
         <item name="bottomNavigationStyle">@style/CustomBottomNavigationView</item>
 
 
+
         <!-- Настраиваем тёмные иконки и текст на статус-баре -->
         <item name="android:windowLightStatusBar">true</item>
     </style>

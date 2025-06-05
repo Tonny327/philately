@@ -1,6 +1,8 @@
 package com.example.philatelia.fragments;
 
 import android.os.Bundle;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -12,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.example.philatelia.R;
 import com.example.philatelia.adapters.StampSetAdapter;
@@ -32,7 +35,7 @@ import java.util.Map;
 public class CatalogFragment extends Fragment {
     private RecyclerView recyclerView;
     private LinearLayout backButton;
-
+    private TextView tvHeader;
     private StampSetAdapter stampSetAdapter;
     private StampAdapter stampAdapter;
     private List<StampSet> stampSetList;
@@ -47,9 +50,19 @@ public class CatalogFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         backButton = view.findViewById(R.id.backButton);
+        tvHeader = view.findViewById(R.id.tvHeader);
 
-        // Кнопка "Назад" возвращает к списку наборов
-        backButton.setOnClickListener(v -> showStampSets());
+
+        // ✅ Обработчик системной кнопки "Назад"
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleBackPressed();
+            }
+        });
+
+        // ✅ Обработчик кнопки "Назад" на экране
+        backButton.setOnClickListener(v -> handleBackPressed());
 
         // Загружаем данные
         stampSetList = loadStampSets();
@@ -64,6 +77,16 @@ public class CatalogFragment extends Fragment {
 
         return view;
     }
+    private void handleBackPressed() {
+        if (!isShowingStampSets) {
+            // Если сейчас показываются марки - вернуться к наборам марок
+            showStampSets();
+        } else {
+            // Если уже на экране наборов - выйти из приложения
+            requireActivity().finish();
+        }
+    }
+
 
 
 
@@ -86,6 +109,9 @@ public class CatalogFragment extends Fragment {
 
         if (backButton != null) {
             backButton.setVisibility(View.VISIBLE); // Показываем кнопку "Назад"
+        }
+        if (tvHeader != null) {
+            tvHeader.setText("Марки за " + selectedYear + " год"); // 🔥 Обновляем заголовок
         }
 
         List<Stamp> stampList = stampsByYear.get(selectedYear);

@@ -15,13 +15,22 @@ import retrofit2.http.Body;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
+
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 
 public class AIHelper {
     private static final String TAG = "AIHelper";
-    private static final String API_KEY = "AIzaSyA17HXAGAB7wqHGsdhcGLaeNxXFT3St0FE"; // Замените на свой ключ
+    private static final String API_KEY = "AIzaSyDaaamRpeOQsI_VzyU1g_WmdpXz_AQc_CI"; // Замените на свой ключ
     private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1/";
 
-
+    // 🔹 ДАННЫЕ ДЛЯ ПРОКСИ
+    private static final String PROXY_HOST = "157.245.95.247"; // IP-адрес прокси
+    private static final int PROXY_PORT = 443;
     private static GeminiService geminiService;
 
     public AIHelper() {
@@ -29,8 +38,12 @@ public class AIHelper {
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);
 
+            // 🔹 Настройка прокси (без аутентификации)
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+
             OkHttpClient client = new OkHttpClient.Builder()
-                    .addInterceptor(logging)
+                    .proxy(proxy) // Указываем прокси
+                    .addInterceptor(logging) // Логирование запросов
                     .build();
 
             Retrofit retrofit = new Retrofit.Builder()
@@ -40,8 +53,11 @@ public class AIHelper {
                     .build();
 
             geminiService = retrofit.create(GeminiService.class);
+            Log.d("AIHelper", "Подключение через прокси: " + PROXY_HOST + ":" + PROXY_PORT);
+
         }
     }
+
 
     public String getResponse(String userMessage) {
         try {

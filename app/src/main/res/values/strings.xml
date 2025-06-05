@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
@@ -12,6 +13,5 @@
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
     <string name="default_web_client_id">1020230572908-l6qlaokuesmpt15mho2of6a4o5b1a7df.apps.googleusercontent.com</string>
-
-
+    <string name="app_name">Philatelia</string>
 </resources>
