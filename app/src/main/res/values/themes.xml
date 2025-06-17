@@ -7,7 +7,22 @@
         <item name="android:statusBarColor">#FFFFFF</item>
         <item name="bottomNavigationStyle">@style/CustomBottomNavigationView</item>
 
+        <!-- Design system colors -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryContainer">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primaryDark</item>
+        <item name="colorOnPrimary">@color/onPrimary</item>
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorPrimaryDark">@color/primaryDark</item>
+        <item name="android:colorAccent">@color/primary</item>
+        <item name="android:windowBackground">@color/surface</item>
+        <item name="android:colorBackground">@color/surface</item>
 
+        <!-- Component styles -->
+        <item name="toolbarStyle">@style/PhilateliaToolbar</item>
+        <item name="buttonStyle">@style/PhilateliaButton</item>
+        <item name="editTextStyle">@style/PhilateliaEditText</item>
+        <item name="cardViewStyle">@style/PhilateliaCardView</item>
 
         <!-- Настраиваем тёмные иконки и текст на статус-баре -->
         <item name="android:windowLightStatusBar">true</item>

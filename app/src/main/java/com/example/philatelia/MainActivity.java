@@ -9,7 +9,6 @@ import androidx.navigation.ui.NavigationUI;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -19,15 +18,11 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private FirebaseAuth auth;
     private NavController navController;
-    private AppBarConfiguration appBarConfiguration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         auth = FirebaseAuth.getInstance();
         FirebaseUser user = auth.getCurrentUser();
@@ -45,18 +40,15 @@ public class MainActivity extends AppCompatActivity {
         if (navHostFragment != null) {
             navController = navHostFragment.getNavController();
             bottomNavigationView = findViewById(R.id.bottom_navigation);
-            
-            // Настройка верхнего уровня навигации
-            appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_catalog,
-                R.id.nav_postcrossing,
-                R.id.nav_helper,
-                R.id.nav_cart,
-                R.id.nav_user
-            ).build();
 
-            // Настройка ActionBar
-            NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+            // Настройка AppBarConfiguration без Toolbar
+            AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
+                    R.id.nav_catalog,
+                    R.id.nav_postcrossing,
+                    R.id.nav_helper,
+                    R.id.nav_cart,
+                    R.id.nav_user
+            ).build();
             
             // Настройка нижней навигации
             NavigationUI.setupWithNavController(bottomNavigationView, navController);
@@ -65,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onSupportNavigateUp() {
-        return NavigationUI.navigateUp(navController, appBarConfiguration) || super.onSupportNavigateUp();
+        return NavigationUI.navigateUp(navController, (AppBarConfiguration) null) || super.onSupportNavigateUp();
     }
 }
 

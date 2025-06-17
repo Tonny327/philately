@@ -22,9 +22,6 @@
         android:theme="@style/Theme.Philatelia"
         tools:targetApi="31">
         <activity
-            android:name=".EditProfileActivity"
-            android:exported="false" />
-        <activity
             android:name=".RegisterActivity"
             android:exported="false" />
         <activity

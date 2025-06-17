@@ -45,7 +45,6 @@ public class UserProfileActivity extends AppCompatActivity {
 
     private TextView etUserName, etUserPhone, etUserEmail, etUserPassword;
     private TextView btnEditName, btnEditPhone, btnEditEmail, btnEditPassword;
-    private ImageView ivUserAvatar;
     private FirebaseAuth auth;
     private FirebaseUser user;
     private FirebaseStorage storage;
@@ -73,7 +72,6 @@ public class UserProfileActivity extends AppCompatActivity {
 
             // Находим все view элементы
             ImageView btnBack = findViewById(R.id.btnBack);
-            ivUserAvatar = findViewById(R.id.ivAvatar);
             etUserName = findViewById(R.id.etUserName);
             etUserPhone = findViewById(R.id.etUserPhone);
             etUserEmail = findViewById(R.id.etUserEmail);
@@ -85,7 +83,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
             if (etUserName == null || etUserPhone == null || etUserEmail == null || 
                 etUserPassword == null || btnEditName == null || btnEditPhone == null || 
-                btnEditEmail == null || btnEditPassword == null || ivUserAvatar == null) {
+                btnEditEmail == null || btnEditPassword == null) {
                 Toast.makeText(this, "Ошибка инициализации интерфейса", Toast.LENGTH_SHORT).show();
                 finish();
                 return;
@@ -94,42 +92,8 @@ public class UserProfileActivity extends AppCompatActivity {
             // Загружаем данные пользователя
             loadUserData();
 
-            // Обработчик нажатия на аватар
-            ivUserAvatar.setOnClickListener(v -> {
-                String[] options = {"Выбрать из галереи", "Сделать фото"};
-                new AlertDialog.Builder(this)
-                    .setTitle("Выберите действие")
-                    .setItems(options, (dialog, which) -> {
-                        if (which == 0) {
-                            // Выбор из галереи
-                            Intent intent = new Intent(Intent.ACTION_PICK);
-                            intent.setType("image/*");
-                            startActivityForResult(intent, REQUEST_IMAGE_PICK);
-                        } else {
-                            // Сделать фото
-                            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                            if (intent.resolveActivity(getPackageManager()) != null) {
-                                startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
-                            }
-                        }
-                    })
-                    .show();
-            });
-
             // Обработчики нажатий
-            btnEditName.setOnClickListener(v -> {
-                try {
-                    Intent intent = new Intent(UserProfileActivity.this, EditProfileActivity.class);
-                    String[] fioParts = etUserName.getText().toString().split(" ");
-                    intent.putExtra("last_name", fioParts.length > 0 ? fioParts[0] : "");
-                    intent.putExtra("first_name", fioParts.length > 1 ? fioParts[1] : "");
-                    intent.putExtra("middle_name", fioParts.length > 2 ? fioParts[2] : "");
-                    startActivityForResult(intent, REQUEST_EDIT_PROFILE);
-                } catch (Exception e) {
-                    Toast.makeText(this, "Ошибка при редактировании профиля: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
-
+            btnEditName.setOnClickListener(v -> showEditNameDialog());
             btnEditPhone.setOnClickListener(v -> showEditPhoneDialog());
             btnEditEmail.setOnClickListener(v -> showEditEmailDialog());
             btnEditPassword.setOnClickListener(v -> showChangePasswordDialog());
@@ -164,25 +128,6 @@ public class UserProfileActivity extends AppCompatActivity {
             etUserEmail.setText(user.getEmail());
         } else {
             etUserEmail.setText("Не указан");
-        }
-
-        // Загрузка аватара
-        if (user != null) {
-            StorageReference avatarRef = storageRef.child("avatars/" + user.getUid() + ".jpg");
-            avatarRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                if (!isFinishing()) {
-                    Glide.with(this)
-                        .load(uri)
-                        .circleCrop()
-                        .placeholder(R.drawable.avatar_placeholder)
-                        .error(R.drawable.avatar_placeholder)
-                        .into(ivUserAvatar);
-                }
-            }).addOnFailureListener(e -> {
-                if (!isFinishing()) {
-                    ivUserAvatar.setImageResource(R.drawable.avatar_placeholder);
-                }
-            });
         }
     }
 
@@ -330,18 +275,12 @@ public class UserProfileActivity extends AppCompatActivity {
             // Загружаем файл
             UploadTask uploadTask = storageRef.putBytes(data);
             uploadTask.addOnSuccessListener(taskSnapshot -> {
-                // Получаем URL загруженного файла
-                storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                    // Загружаем изображение в ImageView
-                    Glide.with(this)
-                            .load(uri)
-                            .placeholder(R.drawable.ic_avatar_placeholder)
-                            .error(R.drawable.ic_avatar_placeholder)
-                            .into(ivUserAvatar);
-
-                    progressDialog.dismiss();
-                    Toast.makeText(this, "Фото профиля обновлено", Toast.LENGTH_SHORT).show();
+                // Получаем URL для Glide
+                storageRef.child("avatars/" + user.getUid() + ".jpg").getDownloadUrl().addOnSuccessListener(uri -> {
+                    if (!isFinishing()) {
+                    }
                 });
+                Toast.makeText(UserProfileActivity.this, "Аватар успешно обновлен", Toast.LENGTH_SHORT).show();
             }).addOnFailureListener(e -> {
                 progressDialog.dismiss();
                 Toast.makeText(this, "Ошибка при загрузке: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -451,23 +390,22 @@ public class UserProfileActivity extends AppCompatActivity {
     }
 
     private void updatePassword(String currentPassword, String newPassword) {
-        if (user != null && user.getEmail() != null) {
+        if (user != null) {
             AuthCredential credential = EmailAuthProvider.getCredential(user.getEmail(), currentPassword);
-            user.reauthenticate(credential)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            user.updatePassword(newPassword)
-                                    .addOnCompleteListener(task1 -> {
-                                        if (task1.isSuccessful()) {
-                                            Toast.makeText(this, "Пароль успешно обновлен", Toast.LENGTH_SHORT).show();
-                                        } else {
-                                            Toast.makeText(this, "Ошибка при обновлении пароля", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
+            user.reauthenticate(credential).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    user.updatePassword(newPassword).addOnCompleteListener(task1 -> {
+                        if (task1.isSuccessful()) {
+                            Toast.makeText(UserProfileActivity.this, "Пароль успешно изменен", Toast.LENGTH_SHORT).show();
+                            etUserPassword.setText("••••••••");
                         } else {
-                            Toast.makeText(this, "Неверный текущий пароль", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(UserProfileActivity.this, "Ошибка при смене пароля: " + task1.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
+                } else {
+                    Toast.makeText(UserProfileActivity.this, "Неверный текущий пароль", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 
@@ -481,5 +419,40 @@ public class UserProfileActivity extends AppCompatActivity {
 
     private boolean isValidPassword(String password) {
         return password.length() >= 6;
+    }
+
+    private void showEditNameDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_edit_name, null);
+        builder.setView(dialogView);
+
+        final EditText etLastName = dialogView.findViewById(R.id.etLastName);
+        final EditText etFirstName = dialogView.findViewById(R.id.etFirstName);
+        final EditText etMiddleName = dialogView.findViewById(R.id.etMiddleName);
+
+        // Заполняем поля текущими значениями
+        etLastName.setText(sharedPreferences.getString("last_name", ""));
+        etFirstName.setText(sharedPreferences.getString("first_name", ""));
+        etMiddleName.setText(sharedPreferences.getString("middle_name", ""));
+
+        builder.setPositiveButton("Сохранить", (dialog, which) -> {
+            String newLastName = etLastName.getText().toString().trim();
+            String newFirstName = etFirstName.getText().toString().trim();
+            String newMiddleName = etMiddleName.getText().toString().trim();
+
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("last_name", newLastName);
+            editor.putString("first_name", newFirstName);
+            editor.putString("middle_name", newMiddleName);
+            editor.apply();
+
+            loadUserData(); // Обновляем UI
+            Toast.makeText(UserProfileActivity.this, "ФИО успешно обновлено", Toast.LENGTH_SHORT).show();
+        });
+        builder.setNegativeButton("Отмена", (dialog, which) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 }
