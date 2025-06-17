@@ -1,15 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    style="@style/FragmentContainerStyle"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.PostcrossingFragment">
+    android:background="?android:attr/colorBackground">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
 
-</FrameLayout>
+        <!-- Регистрация -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Регистрация в посткроссинге"
+            android:textStyle="bold"
+            android:textSize="18sp"/>
+        <EditText
+            android:id="@+id/et_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Имя пользователя"
+            android:layout_marginTop="8dp"/>
+        <EditText
+            android:id="@+id/et_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Email (опционально)"
+            android:inputType="textEmailAddress"
+            android:layout_marginTop="4dp"/>
+        <Button
+            android:id="@+id/btn_register"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Зарегистрироваться"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Статистика -->
+        <TextView
+            android:id="@+id/tv_stats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Статистика"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"/>
+        <TextView
+            android:id="@+id/tv_stats_data"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Отправлено: 0, Получено: 0, Участников: 0"/>
+
+        <!-- Опрос -->
+        <TextView
+            android:id="@+id/tv_poll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Онлайн-опрос"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"/>
+        <TextView
+            android:id="@+id/tv_poll_question"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Какая тема открыток вам ближе?"/>
+        <RadioGroup
+            android:id="@+id/rg_poll_options"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+        <Button
+            android:id="@+id/btn_vote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Голосовать"
+            android:layout_marginTop="8dp"/>
+        <TextView
+            android:id="@+id/tv_poll_result"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Результаты опроса"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Каталог марок -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Актуальная маркировальная продукция"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"/>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_stamps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Аналитика -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Аналитика"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"/>
+        <TextView
+            android:id="@+id/tv_analytics"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Здесь будет аналитика по посткроссингу"/>
+
+    </LinearLayout>
+</ScrollView>

@@ -1,32 +1,33 @@
 package com.example.philatelia;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import com.example.philatelia.fragments.CatalogFragment;
-import com.example.philatelia.fragments.PostcrossingFragment;
-import com.example.philatelia.fragments.CartFragment;
-import com.example.philatelia.fragments.HelperFragment;
-import com.example.philatelia.fragments.UserFragment;
-import com.example.philatelia.R;
-
 
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNavigationView;
     private FirebaseAuth auth;
+    private NavController navController;
+    private AppBarConfiguration appBarConfiguration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         auth = FirebaseAuth.getInstance();
         FirebaseUser user = auth.getCurrentUser();
@@ -38,51 +39,33 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        // Настройка навигации
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        if (navHostFragment != null) {
+            navController = navHostFragment.getNavController();
+            bottomNavigationView = findViewById(R.id.bottom_navigation);
+            
+            // Настройка верхнего уровня навигации
+            appBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.nav_catalog,
+                R.id.nav_postcrossing,
+                R.id.nav_helper,
+                R.id.nav_cart,
+                R.id.nav_user
+            ).build();
 
-        // Загрузка CatalogFragment при запуске приложения
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new CatalogFragment())
-                    .commit();
+            // Настройка ActionBar
+            NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+            
+            // Настройка нижней навигации
+            NavigationUI.setupWithNavController(bottomNavigationView, navController);
         }
-
-        // Слушатель кликов на пункты меню
-        bottomNavigationView.setOnItemSelectedListener(item -> {
-            Fragment selectedFragment = null;
-
-            if (item.getItemId() == R.id.nav_catalog) {
-                selectedFragment = new CatalogFragment();
-            } else if (item.getItemId() == R.id.nav_postcrossing) {
-                selectedFragment = new PostcrossingFragment();
-            } else if (item.getItemId() == R.id.nav_cart) {
-                selectedFragment = new CartFragment();
-            } else if (item.getItemId() == R.id.nav_helper) {
-                selectedFragment = new HelperFragment();
-            } else if (item.getItemId() == R.id.nav_user) {
-                selectedFragment = new UserFragment();
-            }
-
-            if (selectedFragment != null) {
-                getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.fragment_container, selectedFragment)
-                        .commit();
-            }
-            return true;
-        });
-
-        // При старте приложения сразу выбираем пункт "Каталог"
-        bottomNavigationView.setSelectedItemId(R.id.nav_catalog);
     }
 
     @Override
-    public void onBackPressed() {
-        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-            getSupportFragmentManager().popBackStack(); // Возвращаемся к предыдущему фрагменту
-        } else {
-            super.onBackPressed(); // Если фрагментов нет, выходим
-        }
+    public boolean onSupportNavigateUp() {
+        return NavigationUI.navigateUp(navController, appBarConfiguration) || super.onSupportNavigateUp();
     }
 }
 

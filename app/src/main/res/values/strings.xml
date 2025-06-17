@@ -14,4 +14,9 @@
     <string name="login_failed">"Login failed"</string>
     <string name="default_web_client_id">1020230572908-l6qlaokuesmpt15mho2of6a4o5b1a7df.apps.googleusercontent.com</string>
     <string name="app_name">Philatelia</string>
+    <string name="stamp_image">Изображение марки</string>
+    <string name="add_to_cart">Добавить в корзину</string>
+    <string name="loading_error">Ошибка загрузки данных</string>
+    <string name="retry">Повторить</string>
+    <string name="no_stamps_found">Марки не найдены</string>
 </resources>

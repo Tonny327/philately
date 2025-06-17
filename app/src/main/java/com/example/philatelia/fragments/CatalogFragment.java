@@ -1,187 +1,126 @@
 package com.example.philatelia.fragments;
 
 import android.os.Bundle;
-
-import androidx.activity.OnBackPressedCallback;
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.philatelia.R;
-import com.example.philatelia.adapters.StampSetAdapter;
 import com.example.philatelia.adapters.StampAdapter;
-import com.example.philatelia.models.StampSet;
+import com.example.philatelia.data.CartItemEntity;
 import com.example.philatelia.models.Stamp;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.example.philatelia.viewmodels.CartViewModel;
+import com.example.philatelia.viewmodels.StampViewModel;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-public class CatalogFragment extends Fragment {
-    private RecyclerView recyclerView;
-    private LinearLayout backButton;
-    private TextView tvHeader;
-    private StampSetAdapter stampSetAdapter;
-    private StampAdapter stampAdapter;
-    private List<StampSet> stampSetList;
-    private Map<String, List<Stamp>> stampsByYear;
-    private boolean isShowingStampSets = true; // Флаг: true = показываем наборы, false = показываем марки
-    private String selectedYear = "2024";
+public class CatalogFragment extends Fragment implements StampAdapter.OnStampClickListener, StampAdapter.OnAddToCartClickListener {
+    private StampViewModel viewModel;
+    private CartViewModel cartViewModel;
+    private StampAdapter adapter;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private ProgressBar progressBar;
+    private TextView errorText;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_catalog, container, false);
+        return inflater.inflate(R.layout.fragment_catalog, container, false);
+    }
 
-        recyclerView = view.findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        backButton = view.findViewById(R.id.backButton);
-        tvHeader = view.findViewById(R.id.tvHeader);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
+        // Инициализация views
+        RecyclerView recyclerView = view.findViewById(R.id.recycler_view);
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
+        progressBar = view.findViewById(R.id.progress_bar);
+        errorText = view.findViewById(R.id.error_text);
 
-        // ✅ Обработчик системной кнопки "Назад"
-        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                handleBackPressed();
+        // Настройка RecyclerView
+        recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 2));
+        
+        // Настройка адаптера
+        adapter = new StampAdapter(this, this);
+        recyclerView.setAdapter(adapter);
+
+        // Инициализация ViewModel
+        viewModel = new ViewModelProvider(this).get(StampViewModel.class);
+        cartViewModel = new ViewModelProvider(requireActivity()).get(CartViewModel.class);
+
+        // Наблюдение за данными
+        viewModel.getStamps().observe(getViewLifecycleOwner(), stamps -> {
+            adapter.setStamps(stamps);
+            swipeRefreshLayout.setRefreshing(false);
+        });
+
+        viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            if (isLoading) {
+                errorText.setVisibility(View.GONE);
             }
         });
 
-        // ✅ Обработчик кнопки "Назад" на экране
-        backButton.setOnClickListener(v -> handleBackPressed());
-
-        // Загружаем данные
-        stampSetList = loadStampSets();
-        if (stampSetList == null) {
-            Log.e("CatalogFragment", "❌ Ошибка: список наборов марок пуст!");
-            return view;
-        }
-        stampsByYear = loadStamps();
-
-        // Отображаем наборы марок
-        showStampSets();
-
-        return view;
-    }
-    private void handleBackPressed() {
-        if (!isShowingStampSets) {
-            // Если сейчас показываются марки - вернуться к наборам марок
-            showStampSets();
+        viewModel.getError().observe(getViewLifecycleOwner(), error -> {
+            if (error != null) {
+                errorText.setText(error);
+                errorText.setVisibility(View.VISIBLE);
+                Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
         } else {
-            // Если уже на экране наборов - выйти из приложения
-            requireActivity().finish();
-        }
-    }
-
-
-
-
-    private void showStampSets() {
-        isShowingStampSets = true;
-
-        if (backButton != null) {
-            backButton.setVisibility(View.GONE); // Прячем кнопку "Назад"
-        }
-
-        stampSetAdapter = new StampSetAdapter(requireContext(), stampSetList, year -> {
-            selectedYear = year;
-            showStampsForYear();
-        });
-        recyclerView.setAdapter(stampSetAdapter);
-    }
-
-    private void showStampsForYear() {
-        isShowingStampSets = false;
-
-        if (backButton != null) {
-            backButton.setVisibility(View.VISIBLE); // Показываем кнопку "Назад"
-        }
-        if (tvHeader != null) {
-            tvHeader.setText("Марки за " + selectedYear + " год"); // 🔥 Обновляем заголовок
-        }
-
-        List<Stamp> stampList = stampsByYear.get(selectedYear);
-        if (stampList == null || stampList.isEmpty()) {
-            Log.e("CatalogFragment", "❌ Ошибка: Марки за " + selectedYear + " не найдены!");
-            return;
-        }
-
-        stampAdapter = new StampAdapter(requireContext(), stampList);
-        recyclerView.setAdapter(stampAdapter);
-    }
-
-
-
-
-    private List<StampSet> loadStampSets() {
-        String json = loadJSONFromAsset("stamps_set_by_year.json");
-
-        if (json == null) {
-            Log.e("CatalogFragment", "❌ Ошибка: JSON-файл `stamps_set_by_year.json` не найден!");
-            return null;
-        }
-
-        Gson gson = new Gson();
-        Type type = new TypeToken<Map<String, List<StampSet>>>() {}.getType();
-        Map<String, List<StampSet>> stampSetsByYear = gson.fromJson(json, type);
-
-        if (stampSetsByYear == null) {
-            Log.e("CatalogFragment", "❌ Ошибка: JSON-файл `stamps_set_by_year.json` пустой или неправильно отформатирован!");
-            return null;
-        }
-
-        List<StampSet> allStampSets = new ArrayList<>();
-
-        // ✅ Добавляем год вручную из ключа JSON
-        for (String year : stampSetsByYear.keySet()) {
-            for (StampSet set : stampSetsByYear.get(year)) {
-                allStampSets.add(new StampSet(set.getName(), set.getPrice(), set.getImage(), set.getImage2(), year));
+                errorText.setVisibility(View.GONE);
             }
-        }
+        });
 
-        if (allStampSets.isEmpty()) {
-            Log.e("CatalogFragment", "❌ Ошибка: В JSON нет данных!");
-            return null;
-        }
+        // Настройка SwipeRefreshLayout
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            errorText.setVisibility(View.GONE);
+            viewModel.loadStamps(requireContext());
+        });
 
-        return allStampSets;
+        // Загрузка данных
+        viewModel.loadStamps(requireContext());
     }
 
+    @Override
+    public void onStampClick(Stamp stamp) {
+        // Создаем Bundle с данными марки
+        Bundle bundle = new Bundle();
+        bundle.putString("title", stamp.getTitle());
+        bundle.putString("price", stamp.getPrice());
+        bundle.putString("imageUrl", stamp.getImageUrl());
 
-
-    private Map<String, List<Stamp>> loadStamps() {
-        String json = loadJSONFromAsset("stamps_by_year.json");
-        Gson gson = new Gson();
-        Type type = new TypeToken<Map<String, List<Stamp>>>() {}.getType();
-        return gson.fromJson(json, type);
+        // Навигация к детальному фрагменту
+        Navigation.findNavController(requireView())
+                .navigate(R.id.action_nav_catalog_to_stampDetailFragment, bundle);
     }
 
-    private String loadJSONFromAsset(String fileName) {
+    @Override
+    public void onAddToCartClick(Stamp stamp) {
+        CartItemEntity item = new CartItemEntity();
+        item.title = stamp.getTitle();
+        item.price = stamp.getPrice();
         try {
-            InputStream is = requireContext().getAssets().open(fileName);
-            int size = is.available();
-            byte[] buffer = new byte[size];
-            is.read(buffer);
-            is.close();
-            return new String(buffer, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
+            item.priceNum = Double.parseDouble(stamp.getPrice().replaceAll("[^0-9.,]", "").replace(",", "."));
+            item.priceKopecks = (int) Math.round(item.priceNum * 100);
+        } catch (Exception e) {
+            item.priceNum = 0.0;
+            item.priceKopecks = 0;
         }
-        return null;
+        item.imageUrl = stamp.getImageUrl();
+        item.quantity = 1;
+        // item.stampId = null; // если появится уникальный id, добавить сюда
+        cartViewModel.addToCart(item);
+        Toast.makeText(requireContext(), "Марка добавлена в корзину", Toast.LENGTH_SHORT).show();
     }
 }
 
