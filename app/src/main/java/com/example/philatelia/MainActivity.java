@@ -53,6 +53,32 @@ public class MainActivity extends AppCompatActivity {
             // Настройка нижней навигации
             NavigationUI.setupWithNavController(bottomNavigationView, navController);
         }
+
+        // Обрабатываем интент, который запустил эту Activity
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        // Обрабатываем интент при возврате на эту Activity
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+        if (intent != null && intent.getExtras() != null) {
+            String fragmentToLoad = intent.getExtras().getString("fragmentToLoad");
+            if ("helper".equals(fragmentToLoad)) {
+                String chatId = intent.getExtras().getString("chatId");
+                Bundle args = new Bundle();
+                if (chatId != null) {
+                    args.putString("chatId", chatId);
+                }
+                if (navController != null) {
+                    navController.navigate(R.id.nav_helper, args);
+                }
+            }
+        }
     }
 
     @Override

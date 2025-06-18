@@ -9,12 +9,15 @@ import com.example.philatelia.data.StampRepository;
 import com.example.philatelia.models.Stamp;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class StampViewModel extends ViewModel {
     private final StampRepository repository;
     private final MutableLiveData<List<Stamp>> stamps = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> error = new MutableLiveData<>();
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public StampViewModel() {
         repository = new StampRepository();
@@ -33,21 +36,23 @@ public class StampViewModel extends ViewModel {
     }
 
     public void loadStamps(Context context) {
-        isLoading.setValue(true);
-        error.setValue(null);
-
-        repository.fetchStampsFromAssets(context, new StampRepository.StampCallback() {
-            @Override
-            public void onSuccess(List<Stamp> result) {
-                stamps.setValue(result);
-                isLoading.setValue(false);
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-                error.setValue(errorMessage);
-                isLoading.setValue(false);
+        isLoading.postValue(true);
+        error.postValue(null);
+        executorService.execute(() -> {
+            try {
+                List<Stamp> result = repository.getStampsFromAssets(context.getApplicationContext());
+                stamps.postValue(result);
+            } catch (Exception e) {
+                error.postValue(e.getMessage());
+            } finally {
+                isLoading.postValue(false);
             }
         });
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        executorService.shutdown();
     }
 } 

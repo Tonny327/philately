@@ -16,6 +16,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Считываем новый ключ
+        val mistralApiKey: String = project.property("MISTRAL_API_KEY") as? String ?: ""
+        buildConfigField("String", "MISTRAL_API_KEY", "\"$mistralApiKey\"")
     }
 
     buildTypes {
@@ -30,6 +34,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

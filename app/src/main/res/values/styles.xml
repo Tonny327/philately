@@ -47,4 +47,14 @@
         <item name="android:textColor">@color/textSecondary</item>
     </style>
 
+    <style name="ChatBubbleUser">
+        <item name="android:background">@drawable/bubble_user</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
 </resources> 

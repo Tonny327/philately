@@ -2,48 +2,47 @@ package com.example.philatelia.helpers;
 
 import android.util.Log;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.example.philatelia.BuildConfig;
+import com.example.philatelia.models.deepseek.ChatRequest;
+import com.example.philatelia.models.deepseek.ChatResponse;
 
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
-import retrofit2.http.Headers;
 import retrofit2.http.POST;
-import retrofit2.http.Query;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
-
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
+import java.util.concurrent.TimeUnit;
 
 public class AIHelper {
     private static final String TAG = "AIHelper";
-    private static final String API_KEY = "AIzaSyDaaamRpeOQsI_VzyU1g_WmdpXz_AQc_CI"; // Замените на свой ключ
-    private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1/";
+    // Ключ будет считываться из BuildConfig
+    private static final String API_KEY = BuildConfig.MISTRAL_API_KEY; 
+    private static final String BASE_URL = "https://api.deepinfra.com/v1/openai/";
 
-    // 🔹 ДАННЫЕ ДЛЯ ПРОКСИ
-    private static final String PROXY_HOST = "157.245.95.247"; // IP-адрес прокси
-    private static final int PROXY_PORT = 443;
-    private static GeminiService geminiService;
+    private static MistralService mistralService;
 
     public AIHelper() {
-        if (geminiService == null) {
+        if (mistralService == null) {
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-            // 🔹 Настройка прокси (без аутентификации)
-            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-
             OkHttpClient client = new OkHttpClient.Builder()
-                    .proxy(proxy) // Указываем прокси
-                    .addInterceptor(logging) // Логирование запросов
+                    .connectTimeout(60, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
+                    .writeTimeout(60, TimeUnit.SECONDS)
+                    .addInterceptor(chain -> {
+                        Request original = chain.request();
+                        Request.Builder requestBuilder = original.newBuilder()
+                                .header("Authorization", "Bearer " + API_KEY)
+                                .header("Content-Type", "application/json");
+                        Request request = requestBuilder.build();
+                        return chain.proceed(request);
+                    })
+                    .addInterceptor(logging)
                     .build();
 
             Retrofit retrofit = new Retrofit.Builder()
@@ -52,76 +51,41 @@ public class AIHelper {
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
 
-            geminiService = retrofit.create(GeminiService.class);
-            Log.d("AIHelper", "Подключение через прокси: " + PROXY_HOST + ":" + PROXY_PORT);
-
+            mistralService = retrofit.create(MistralService.class);
         }
     }
 
-
     public String getResponse(String userMessage) {
         try {
-            JsonObject requestBody = new JsonObject();
-            JsonObject contents = new JsonObject();
-            JsonArray partsArray = new JsonArray();
-            JsonObject textObj = new JsonObject();
+            ChatRequest.Message systemMessage = new ChatRequest.Message("system", "Ты — дружелюбный эксперт-филателист. Твоя роль — предоставлять подробную и точную информацию о почтовых марках, их истории, дизайне и ценности. Всегда отвечай на русском языке. Будь готов помочь и предложить интересные темы для разговора, если пользователь не знает, о чем спросить.");
+            ChatRequest.Message userMsg = new ChatRequest.Message("user", userMessage);
+            
+            ChatRequest requestBody = new ChatRequest("mistralai/Mistral-7B-Instruct-v0.2", java.util.Arrays.asList(systemMessage, userMsg), false);
 
-            textObj.addProperty("text", userMessage);
-            partsArray.add(textObj);
-
-            contents.add("parts", partsArray);
-            JsonArray contentsArray = new JsonArray();
-            contentsArray.add(contents);
-
-            requestBody.add("contents", contentsArray);
-
-            // Логируем JSON перед отправкой
-            Log.d("AIHelper", "Отправляем JSON в Gemini: " + requestBody.toString());
-
-            Call<JsonObject> call = geminiService.getChatResponse(API_KEY, requestBody);
-            Response<JsonObject> response = call.execute();
-
-            // Логируем HTTP-код ответа
-            Log.d("AIHelper", "HTTP-код ответа: " + response.code());
+            Call<ChatResponse> call = mistralService.getChatResponse(requestBody);
+            Response<ChatResponse> response = call.execute();
 
             if (response.isSuccessful() && response.body() != null) {
-                JsonObject responseBody = response.body();
-                Log.d("AIHelper", "Ответ от Gemini API: " + responseBody.toString());
-
-                if (responseBody.has("candidates")) {
-                    JsonArray candidates = responseBody.getAsJsonArray("candidates");
-                    if (candidates.size() > 0) {
-                        JsonObject content = candidates.get(0).getAsJsonObject().getAsJsonObject("content");
-                        JsonArray parts = content.getAsJsonArray("parts");
-                        if (parts.size() > 0) {
-                            return parts.get(0).getAsJsonObject().get("text").getAsString();
-                        }
-                    }
+                String content = response.body().getFirstChoiceContent();
+                if (content != null) {
+                    return content;
                 }
-                return "Ошибка: Gemini не вернул ожидаемый ответ. Ответ: " + responseBody;
+                return "Ошибка: Модель не вернула контент.";
             } else {
-                if (response.errorBody() != null) {
-                    Log.e(TAG, "Ошибка от сервера: " + response.errorBody().string());
-                }
+                String errorBody = response.errorBody() != null ? response.errorBody().string() : "нет тела ошибки";
+                Log.e(TAG, "Ошибка от сервера: " + errorBody);
                 return "Ошибка: Сервер вернул HTTP " + response.code();
             }
 
         } catch (Exception e) {
-            Log.e("AIHelper", "Ошибка в getResponse: " + e.getMessage(), e);
-            return "Ошибка при подключении к Gemini: " + e.getMessage();
+            Log.e(TAG, "Ошибка в getResponse: " + e.getMessage(), e);
+            return "Ошибка при подключении к API: " + e.getMessage();
         }
     }
 
-
-
-    // Интерфейс для работы с API
-    public interface GeminiService {
-        @Headers("Content-Type: application/json")
-        @POST("models/gemini-pro:generateContent")
-        Call<JsonObject> getChatResponse(
-                @Query("key") String apiKey,
-                @Body JsonObject requestBody
-        );
+    public interface MistralService {
+        @POST("chat/completions")
+        Call<ChatResponse> getChatResponse(@Body ChatRequest requestBody);
     }
 }
 
