@@ -62,12 +62,12 @@ public class StampDetailFragment extends Fragment {
             item.price = price;
             double priceDouble = 0.0;
             try {
-                priceDouble = Double.parseDouble(price.replace(",", "."));
+                String priceString = price.replaceAll("[^\\d,.]", "").replace(',', '.');
+                priceDouble = Double.parseDouble(priceString);
             } catch (Exception e) {
-                priceDouble = 0.0;
+                //
             }
             item.priceNum = priceDouble;
-            item.priceKopecks = (int) Math.round(priceDouble * 100);
             item.imageUrl = imageUrl;
             item.quantity = 1;
             cartViewModel.addToCart(item);

@@ -23,6 +23,7 @@ import com.example.philatelia.data.CartItemEntity;
 import com.example.philatelia.models.Stamp;
 import com.example.philatelia.viewmodels.CartViewModel;
 import com.example.philatelia.viewmodels.StampViewModel;
+import com.google.gson.Gson;
 
 public class CatalogFragment extends Fragment implements StampAdapter.OnStampClickListener, StampAdapter.OnAddToCartClickListener {
     private StampViewModel viewModel;
@@ -111,10 +112,8 @@ public class CatalogFragment extends Fragment implements StampAdapter.OnStampCli
         item.price = stamp.getPrice();
         try {
             item.priceNum = Double.parseDouble(stamp.getPrice().replaceAll("[^0-9.,]", "").replace(",", "."));
-            item.priceKopecks = (int) Math.round(item.priceNum * 100);
         } catch (Exception e) {
             item.priceNum = 0.0;
-            item.priceKopecks = 0;
         }
         item.imageUrl = stamp.getImageUrl();
         item.quantity = 1;

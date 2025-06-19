@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class HelperFragment extends Fragment implements ChatAdapter.AnimationListener {
+public class HelperFragment extends Fragment {
     private RecyclerView chatRecyclerView;
     private EditText inputMessage;
     private ImageButton sendButton;
@@ -43,7 +43,6 @@ public class HelperFragment extends Fragment implements ChatAdapter.AnimationLis
     private AIHelper aiHelper;
     private StampRepository stampRepository;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
-    private ValueAnimator currentAnimator;
     private boolean isGenerating = false;
 
     private ChatManager chatManager;
@@ -73,7 +72,7 @@ public class HelperFragment extends Fragment implements ChatAdapter.AnimationLis
     }
 
     private void setupRecyclerView() {
-        chatAdapter = new ChatAdapter(messages, this, chatRecyclerView);
+        chatAdapter = new ChatAdapter(messages, chatRecyclerView);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
         layoutManager.setStackFromEnd(true);
         chatRecyclerView.setLayoutManager(layoutManager);
@@ -104,9 +103,8 @@ public class HelperFragment extends Fragment implements ChatAdapter.AnimationLis
     }
 
     private void stopGeneration() {
-        if (currentAnimator != null) {
-            currentAnimator.cancel();
-        }
+        // Этот метод можно оставить пустым или удалить, если он больше нигде не используется.
+        // Пока оставим пустым.
     }
 
     private void sendMessage() {
@@ -189,8 +187,16 @@ public class HelperFragment extends Fragment implements ChatAdapter.AnimationLis
                     context = "Вот информация о марках из каталога: " + new Gson().toJson(relevantStamps);
                 }
 
-                String finalQuery = context + "\n\nИсходя из этого контекста (если он есть), ответь на вопрос: " + userMessage;
-                aiResponse = aiHelper.getResponse(finalQuery);
+                // Создаем временную копию истории для отправки в API
+                List<ChatMessage> messagesForApi = new ArrayList<>(messages);
+                // Заменяем последнее сообщение на сообщение с RAG-контекстом
+                if (!messagesForApi.isEmpty()) {
+                    ChatMessage lastMessage = messagesForApi.get(messagesForApi.size() - 1);
+                    String finalQuery = context + "\n\nИсходя из этого контекста (если он есть), ответь на вопрос: " + lastMessage.getMessage();
+                    messagesForApi.set(messagesForApi.size() - 1, new ChatMessage(finalQuery, true));
+                }
+                
+                aiResponse = aiHelper.getResponse(messagesForApi);
 
             } catch (Exception e) {
                 Log.e("HelperFragment", "Ошибка при получении ответа от AI", e);
@@ -210,7 +216,6 @@ public class HelperFragment extends Fragment implements ChatAdapter.AnimationLis
                     chatAdapter.notifyItemRemoved(messages.size());
                     
                     messages.add(aiMessage);
-                    chatAdapter.setPositionToAnimate(messages.size() - 1);
                     chatAdapter.notifyItemInserted(messages.size() - 1);
                     chatRecyclerView.smoothScrollToPosition(messages.size() - 1);
                 });
@@ -240,32 +245,9 @@ public class HelperFragment extends Fragment implements ChatAdapter.AnimationLis
         executorService.shutdown(); // Освобождаем ресурсы потока при уничтожении фрагмента
     }
 
-    @Override
-    public void onAnimationStarted(ValueAnimator animator) {
-        this.currentAnimator = animator;
-        setGeneratingState(true);
-    }
-
-    @Override
-    public void onAnimationFinished() {
-        this.currentAnimator = null;
-        setGeneratingState(false);
-    }
-
     private void setGeneratingState(boolean generating) {
-        isGenerating = generating;
-        if (isAdded()) {
-            requireActivity().runOnUiThread(() -> {
-                inputMessage.setEnabled(!generating);
-                if (generating) {
-                    sendButton.setImageResource(R.drawable.ic_stop_generation);
-                    sendButton.setOnClickListener(v -> stopGeneration());
-                } else {
-                    sendButton.setImageResource(R.drawable.ic_send);
-                    sendButton.setOnClickListener(v -> sendMessage());
-                }
-            });
-        }
+        this.isGenerating = generating;
+        // Можно добавить логику для отображения индикатора загрузки, если нужно
     }
 }
 

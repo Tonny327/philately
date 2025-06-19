@@ -39,8 +39,9 @@ android {
 }
 
 dependencies {
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.10.0")
+    implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.annotation:annotation:1.7.1")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
@@ -50,7 +51,7 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     
     // Navigation Component
-    val nav_version = "2.7.6"
+    val nav_version = "2.7.7"
     implementation("androidx.navigation:navigation-fragment:$nav_version")
     implementation("androidx.navigation:navigation-ui:$nav_version")
     
@@ -58,9 +59,10 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     
     // Firebase
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-auth:22.3.1")
+    implementation("com.google.firebase:firebase-firestore:25.0.0")
     implementation("com.google.firebase:firebase-database")
+    implementation("com.google.firebase:firebase-storage:21.0.0")
     implementation("com.google.firebase:firebase-analytics")
     
     // Google Sign In
@@ -88,4 +90,12 @@ dependencies {
     
     implementation("androidx.room:room-runtime:2.6.1")
     annotationProcessor("androidx.room:room-compiler:2.6.1")
+
+    // Markwon for Markdown
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:inline-parser:4.6.2")
+    implementation("io.noties.markwon:ext-tables:4.6.2")
+
+    // Retrofit for networking
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
 }

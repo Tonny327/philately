@@ -3,8 +3,13 @@ package com.example.philatelia.helpers;
 import android.util.Log;
 
 import com.example.philatelia.BuildConfig;
+import com.example.philatelia.models.ChatMessage;
 import com.example.philatelia.models.deepseek.ChatRequest;
 import com.example.philatelia.models.deepseek.ChatResponse;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -31,9 +36,9 @@ public class AIHelper {
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);
 
             OkHttpClient client = new OkHttpClient.Builder()
-                    .connectTimeout(60, TimeUnit.SECONDS)
-                    .readTimeout(60, TimeUnit.SECONDS)
-                    .writeTimeout(60, TimeUnit.SECONDS)
+                    .connectTimeout(120, TimeUnit.SECONDS)
+                    .readTimeout(120, TimeUnit.SECONDS)
+                    .writeTimeout(120, TimeUnit.SECONDS)
                     .addInterceptor(chain -> {
                         Request original = chain.request();
                         Request.Builder requestBuilder = original.newBuilder()
@@ -55,12 +60,19 @@ public class AIHelper {
         }
     }
 
-    public String getResponse(String userMessage) {
+    public String getResponse(List<ChatMessage> conversationHistory) {
         try {
-            ChatRequest.Message systemMessage = new ChatRequest.Message("system", "Ты — дружелюбный эксперт-филателист. Твоя роль — предоставлять подробную и точную информацию о почтовых марках, их истории, дизайне и ценности. Всегда отвечай на русском языке. Будь готов помочь и предложить интересные темы для разговора, если пользователь не знает, о чем спросить.");
-            ChatRequest.Message userMsg = new ChatRequest.Message("user", userMessage);
-            
-            ChatRequest requestBody = new ChatRequest("mistralai/Mistral-7B-Instruct-v0.2", java.util.Arrays.asList(systemMessage, userMsg), false);
+            List<ChatRequest.Message> requestMessages = new ArrayList<>();
+            // Добавляем системное сообщение
+            requestMessages.add(new ChatRequest.Message("system", "Ты — дружелюбный эксперт-филателист. Твоя роль — предоставлять подробную и точную информацию о почтовых марках, их истории, дизайне и ценности. Всегда отвечай на русском языке. Будь готов помочь и предложить интересные темы для разговора, если пользователь не знает, о чем спросить. Используй Markdown для форматирования ответа."));
+
+            // Добавляем историю диалога
+            for (ChatMessage chatMessage : conversationHistory) {
+                String role = chatMessage.isUser() ? "user" : "assistant";
+                requestMessages.add(new ChatRequest.Message(role, chatMessage.getMessage()));
+            }
+
+            ChatRequest requestBody = new ChatRequest("deepseek-ai/DeepSeek-R1-0528", requestMessages, false);
 
             Call<ChatResponse> call = mistralService.getChatResponse(requestBody);
             Response<ChatResponse> response = call.execute();
