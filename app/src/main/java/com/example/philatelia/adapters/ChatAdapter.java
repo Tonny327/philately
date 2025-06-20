@@ -23,12 +23,10 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final Markwon markwon;
 
     // Конструктор
-    public ChatAdapter(List<ChatMessage> messages, RecyclerView recyclerView) {
+    public ChatAdapter(List<ChatMessage> messages, RecyclerView recyclerView, Markwon markwon) {
         this.messages = messages;
         this.recyclerView = recyclerView;
-        this.markwon = Markwon.builder(recyclerView.getContext())
-                .usePlugin(TablePlugin.create(recyclerView.getContext()))
-                .build();
+        this.markwon = markwon;
     }
 
     @NonNull

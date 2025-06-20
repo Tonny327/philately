@@ -5,28 +5,39 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.navigation.Navigation;
 
 import com.example.philatelia.R;
-import com.example.philatelia.models.PostcrossingUser;
-import com.example.philatelia.models.PostcrossingStats;
-import com.example.philatelia.viewmodels.PostcrossingViewModel;
 import com.example.philatelia.adapters.PostcrossingStampAdapter;
-import com.example.philatelia.models.PostcrossingStamp;
+import com.example.philatelia.adapters.StampAnalyticsAdapter;
+import com.example.philatelia.models.PostcrossingPoll;
+import com.example.philatelia.models.PostcrossingStats;
+import com.example.philatelia.models.PostcrossingUser;
+import com.example.philatelia.models.Stamp;
+import com.example.philatelia.viewmodels.PostcrossingViewModel;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -45,14 +56,21 @@ public class PostcrossingFragment extends Fragment {
     private String mParam2;
 
     private PostcrossingViewModel viewModel;
-    private EditText etName, etEmail;
+    private RecyclerView rvStamps;
+    private RecyclerView rvAnalytics;
+    private PostcrossingStampAdapter stampAdapter;
+    private StampAnalyticsAdapter analyticsAdapter;
+    private LinearLayout layoutRegistrationForm;
+    private LinearLayout layoutStats;
+    private EditText etName, etEmail, etPassword, etAddress;
+    private Spinner spinnerCountry, spinnerCity;
     private Button btnRegister;
     private TextView tvStats, tvStatsData;
+    private TextView tvPollQuestion, tvPollResult;
     private RadioGroup rgPollOptions;
     private Button btnVote;
-    private TextView tvPollQuestion, tvPollResult;
-    private RecyclerView rvStamps;
-    private PostcrossingStampAdapter stampAdapter;
+
+    private Map<String, List<String>> citiesByCountry = new HashMap<>();
 
     public PostcrossingFragment() {
         // Required empty public constructor
@@ -88,117 +106,155 @@ public class PostcrossingFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_postcrossing, container, false);
+        View view = inflater.inflate(R.layout.fragment_postcrossing, container, false);
+
+        initViews(view);
+        setupCountryCitySpinners();
+
+        viewModel = new ViewModelProvider(this).get(PostcrossingViewModel.class);
+
+        setupRecyclerViews();
+        setupObservers();
+        setupListeners();
+
+        viewModel.loadInitialData(requireContext());
+
+        return view;
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+    private void initViews(View view) {
+        rvStamps = view.findViewById(R.id.rv_stamps);
+        rvAnalytics = view.findViewById(R.id.rv_analytics);
+        layoutRegistrationForm = view.findViewById(R.id.layout_registration_form);
+        layoutStats = view.findViewById(R.id.layout_stats);
         etName = view.findViewById(R.id.et_name);
         etEmail = view.findViewById(R.id.et_email);
+        etPassword = view.findViewById(R.id.et_password);
+        spinnerCountry = view.findViewById(R.id.spinner_country);
+        spinnerCity = view.findViewById(R.id.spinner_city);
+        etAddress = view.findViewById(R.id.et_address);
         btnRegister = view.findViewById(R.id.btn_register);
         tvStats = view.findViewById(R.id.tv_stats);
         tvStatsData = view.findViewById(R.id.tv_stats_data);
+        tvPollQuestion = view.findViewById(R.id.tv_poll_question);
         rgPollOptions = view.findViewById(R.id.rg_poll_options);
         btnVote = view.findViewById(R.id.btn_vote);
-        tvPollQuestion = view.findViewById(R.id.tv_poll_question);
         tvPollResult = view.findViewById(R.id.tv_poll_result);
-        rvStamps = view.findViewById(R.id.rv_stamps);
+    }
 
-        viewModel = new ViewModelProvider(this).get(PostcrossingViewModel.class);
-        viewModel.loadUserAndStats(requireContext());
+    private void setupCountryCitySpinners() {
+        // Заглушки данных
+        citiesByCountry.put("Беларусь", Arrays.asList("Минск", "Гомель", "Брест", "Витебск", "Гродно", "Могилёв"));
+        citiesByCountry.put("Россия", Arrays.asList("Москва", "Санкт-Петербург", "Новосибирск"));
+        citiesByCountry.put("Украина", Arrays.asList("Киев", "Харьков", "Одесса"));
 
-        viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
-            if (user != null && user.isRegistered()) {
-                etName.setVisibility(View.GONE);
-                etEmail.setVisibility(View.GONE);
-                btnRegister.setVisibility(View.GONE);
-                tvStats.setVisibility(View.VISIBLE);
-                tvStatsData.setVisibility(View.VISIBLE);
-            } else {
-                etName.setVisibility(View.VISIBLE);
-                etEmail.setVisibility(View.VISIBLE);
-                btnRegister.setVisibility(View.VISIBLE);
-                tvStats.setVisibility(View.GONE);
-                tvStatsData.setVisibility(View.GONE);
-            }
-        });
+        List<String> countries = new ArrayList<>(citiesByCountry.keySet());
+        ArrayAdapter<String> countryAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, countries);
+        countryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCountry.setAdapter(countryAdapter);
 
-        viewModel.getStats().observe(getViewLifecycleOwner(), stats -> {
-            if (stats != null) {
-                String statsText = "Отправлено: " + stats.getSent() + ", Получено: " + stats.getReceived() + ", Участников: " + stats.getParticipants();
-                tvStatsData.setText(statsText);
-            }
-        });
-
-        viewModel.loadPoll(requireContext());
-        viewModel.getPoll().observe(getViewLifecycleOwner(), poll -> {
-            if (poll == null) return;
-            tvPollQuestion.setText(poll.getQuestion());
-            rgPollOptions.removeAllViews();
-            int[] votes = poll.getVotes();
-            int totalVotes = 0;
-            for (int v : votes) totalVotes += v;
-            for (int i = 0; i < poll.getOptions().size(); i++) {
-                RadioButton rb = new RadioButton(requireContext());
-                rb.setText(poll.getOptions().get(i));
-                rb.setId(i);
-                rb.setEnabled(poll.getUserVote() == -1);
-                rgPollOptions.addView(rb);
-                if (poll.getUserVote() == i) rb.setChecked(true);
-            }
-            // Показать результаты, если пользователь уже голосовал
-            if (poll.getUserVote() != -1) {
-                StringBuilder result = new StringBuilder();
-                for (int i = 0; i < poll.getOptions().size(); i++) {
-                    int percent = totalVotes > 0 ? (int) Math.round(100.0 * votes[i] / totalVotes) : 0;
-                    result.append(poll.getOptions().get(i)).append(": ").append(percent).append("%\n");
+        spinnerCountry.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedCountry = (String) parent.getItemAtPosition(position);
+                List<String> cities = citiesByCountry.get(selectedCountry);
+                if (cities != null) {
+                    ArrayAdapter<String> cityAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, cities);
+                    cityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    spinnerCity.setAdapter(cityAdapter);
                 }
-                tvPollResult.setText(result.toString().trim());
-                tvPollResult.setVisibility(View.VISIBLE);
-                btnVote.setEnabled(false);
-            } else {
-                tvPollResult.setVisibility(View.GONE);
-                btnVote.setEnabled(true);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+    }
 
-        btnRegister.setOnClickListener(v -> {
-            String name = etName.getText().toString().trim();
-            String email = etEmail.getText().toString().trim();
-            if (TextUtils.isEmpty(name)) {
-                Toast.makeText(requireContext(), "Введите имя", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            viewModel.registerUser(requireContext(), name, email);
-            Toast.makeText(requireContext(), "Регистрация успешна!", Toast.LENGTH_SHORT).show();
-        });
-
-        btnVote.setOnClickListener(v -> {
-            int checkedId = rgPollOptions.getCheckedRadioButtonId();
-            if (checkedId == -1) {
-                Toast.makeText(requireContext(), "Выберите вариант", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            viewModel.votePoll(requireContext(), checkedId);
-        });
-
-        rvStamps.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+    private void setupRecyclerViews() {
+        rvStamps.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         stampAdapter = new PostcrossingStampAdapter(new ArrayList<>());
         rvStamps.setAdapter(stampAdapter);
 
-        viewModel.getStamps().observe(getViewLifecycleOwner(), stamps -> {
-            stampAdapter.setStamps(stamps);
-        });
-        viewModel.loadStamps(requireContext());
+        rvAnalytics.setLayoutManager(new LinearLayoutManager(getContext()));
+        analyticsAdapter = new StampAnalyticsAdapter(new ArrayList<>());
+        rvAnalytics.setAdapter(analyticsAdapter);
+    }
 
-        stampAdapter.setOnStampClickListener(stamp -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("title", stamp.getTitle());
-            bundle.putString("price", stamp.getPrice());
-            bundle.putString("imageUrl", stamp.getImageUrl());
-            Navigation.findNavController(requireView())
-                .navigate(R.id.action_nav_postcrossing_to_stampDetailFragment, bundle);
+    private void setupObservers() {
+        viewModel.getUser().observe(getViewLifecycleOwner(), this::updateUiBasedOnRegistration);
+        viewModel.getStats().observe(getViewLifecycleOwner(), stats -> {
+            String statsText = "Отправлено: " + stats.getSent() + "\nПолучено: " + stats.getReceived() + "\nУчастников: " + stats.getParticipants();
+            tvStatsData.setText(statsText);
         });
+        viewModel.getPoll().observe(getViewLifecycleOwner(), this::displayPoll);
+        viewModel.getStamps().observe(getViewLifecycleOwner(), stamps -> stampAdapter.setStamps(stamps));
+        viewModel.getAnalytics().observe(getViewLifecycleOwner(), analytics -> {
+            if (analytics != null) {
+                analyticsAdapter.updateData(analytics);
+            }
+        });
+    }
+
+    private void setupListeners() {
+        btnRegister.setOnClickListener(v -> {
+            String name = etName.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
+            String password = etPassword.getText().toString().trim();
+            String country = spinnerCountry.getSelectedItem().toString();
+            String city = spinnerCity.getSelectedItem().toString();
+            String address = etAddress.getText().toString().trim();
+
+            if (name.isEmpty() || email.isEmpty() || password.isEmpty() || address.isEmpty()) {
+                Toast.makeText(getContext(), "Пожалуйста, заполните все поля", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (password.length() < 6) {
+                Toast.makeText(getContext(), "Пароль должен содержать не менее 6 символов", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            viewModel.registerUser(requireContext(), name, email, country, city, address);
+        });
+
+        btnVote.setOnClickListener(v -> {
+            int selectedId = rgPollOptions.getCheckedRadioButtonId();
+            if (selectedId != -1) {
+                RadioButton selectedRadioButton = rgPollOptions.findViewById(selectedId);
+                String selectedOption = selectedRadioButton.getText().toString();
+                viewModel.voteInPoll(requireContext(), selectedOption);
+            } else {
+                Toast.makeText(getContext(), "Пожалуйста, выберите вариант", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateUiBasedOnRegistration(PostcrossingUser user) {
+        if (user.isRegistered()) {
+            layoutRegistrationForm.setVisibility(View.GONE);
+            layoutStats.setVisibility(View.VISIBLE);
+        } else {
+            layoutRegistrationForm.setVisibility(View.VISIBLE);
+            layoutStats.setVisibility(View.GONE);
+        }
+    }
+
+    private void displayPoll(PostcrossingPoll poll) {
+        if (poll != null) {
+            tvPollQuestion.setText(poll.getQuestion());
+            rgPollOptions.removeAllViews();
+            for (String option : poll.getOptions()) {
+                RadioButton rb = new RadioButton(getContext());
+                rb.setText(option);
+                int totalVotes = poll.getTotalVotes();
+                int optionVotes = poll.getVotesForOption(option);
+                String resultText = option + " (" + (totalVotes > 0 ? (100 * optionVotes / totalVotes) : 0) + "%)";
+                rb.setText(poll.isVoted() ? resultText : option);
+                rb.setEnabled(!poll.isVoted());
+                rgPollOptions.addView(rb);
+            }
+            btnVote.setEnabled(!poll.isVoted());
+            tvPollResult.setVisibility(poll.isVoted() ? View.VISIBLE : View.GONE);
+        }
     }
 }

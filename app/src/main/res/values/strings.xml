@@ -22,4 +22,12 @@
     <string name="retry">Повторить</string>
     <string name="no_stamps_found">Марки не найдены</string>
     <string name="no_internet">Нет подключения к интернету</string>
+    <string name="user_profile">Профиль пользователя</string>
+    <string name="change_password">Сменить пароль</string>
+    <string name="order_history">История заказов</string>
+    <string name="feedback">Обратная связь</string>
+    <string name="logout">Выйти</string>
+    <string name="poll_count_format">Анкет: %d</string>
+    <string name="place_not_available_format">%d. Место - нет данных</string>
+    <string name="place_details_format">%d. %s (%d голоса) - %s</string>
 </resources>

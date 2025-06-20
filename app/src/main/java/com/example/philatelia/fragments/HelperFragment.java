@@ -33,6 +33,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.noties.markwon.Markwon;
+import io.noties.markwon.ext.tables.TablePlugin;
+
 public class HelperFragment extends Fragment {
     private RecyclerView chatRecyclerView;
     private EditText inputMessage;
@@ -72,7 +75,10 @@ public class HelperFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        chatAdapter = new ChatAdapter(messages, chatRecyclerView);
+        Markwon markwon = Markwon.builder(requireContext())
+                .usePlugin(TablePlugin.create(requireContext()))
+                .build();
+        chatAdapter = new ChatAdapter(messages, chatRecyclerView, markwon);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
         layoutManager.setStackFromEnd(true);
         chatRecyclerView.setLayoutManager(layoutManager);

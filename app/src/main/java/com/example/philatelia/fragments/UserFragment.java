@@ -19,6 +19,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.bumptech.glide.Glide;
 import com.example.philatelia.FeedbackActivity;
@@ -26,6 +28,7 @@ import com.example.philatelia.LoginActivity;
 import com.example.philatelia.OrderHistoryActivity;
 import com.example.philatelia.R;
 import com.example.philatelia.UserProfileActivity;
+import com.example.philatelia.viewmodels.PostcrossingViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.FirebaseStorage;
@@ -107,9 +110,22 @@ public class UserFragment extends Fragment {
         btnFeedback.setOnClickListener(v ->
                 startActivity(new Intent(getActivity(), FeedbackActivity.class)));
 
+        // Кнопка "Полезные ссылки"
+        btnUsefulLinks.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.action_nav_user_to_linksFragment));
+
+        // Кнопка "Отзывы и вопросы"
+        btnReviews.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.action_nav_user_to_feedbackFragment));
+
         // Кнопка выхода
         tvLogout.setOnClickListener(v -> {
             auth.signOut(); // Выход из Firebase
+
+            // Очистка данных Postcrossing
+            PostcrossingViewModel postcrossingViewModel = new ViewModelProvider(requireActivity()).get(PostcrossingViewModel.class);
+            postcrossingViewModel.clearData(requireContext());
+
             requireActivity().getSharedPreferences("UserPrefs", requireContext().MODE_PRIVATE)
                     .edit().putBoolean("isLoggedIn", false).apply();
 
