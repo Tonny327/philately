@@ -3,6 +3,7 @@ package com.example.philatelia;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -16,6 +17,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
@@ -24,6 +26,7 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.android.gms.common.api.ApiException;
 
 public class RegisterActivity extends AppCompatActivity {
+    private static final String TAG = "RegisterActivity";
     private EditText etUsername, etEmail, etPassword, etConfirmPassword;
     private Button btnRegister;
     private TextView btnLogin;
@@ -105,7 +108,10 @@ public class RegisterActivity extends AppCompatActivity {
                             finish();
                         }
                     } else {
-                        Toast.makeText(this, "Ошибка: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        Exception e = task.getException();
+                        Log.e(TAG, "Email/password registration failed", e);
+                        String msg = (e == null) ? "Неизвестная ошибка" : (e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage()));
+                        Toast.makeText(this, "Ошибка: " + msg, Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -127,7 +133,10 @@ public class RegisterActivity extends AppCompatActivity {
                     firebaseAuthWithGoogle(account);
                 }
             } catch (ApiException e) {
-                Toast.makeText(this, "Ошибка регистрации через Google: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                int code = e.getStatusCode();
+                String codeStr = GoogleSignInStatusCodes.getStatusCodeString(code);
+                Log.e(TAG, "Google sign-up failed. code=" + code + " (" + codeStr + ")", e);
+                Toast.makeText(this, "Ошибка регистрации через Google: " + code + " " + codeStr, Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -141,7 +150,10 @@ public class RegisterActivity extends AppCompatActivity {
                         startActivity(new Intent(RegisterActivity.this, MainActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(RegisterActivity.this, "Ошибка регистрации через Google: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        Exception e = task.getException();
+                        Log.e(TAG, "Firebase signInWithCredential failed", e);
+                        String msg = (e == null) ? "Неизвестная ошибка" : (e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage()));
+                        Toast.makeText(RegisterActivity.this, "Ошибка регистрации через Google: " + msg, Toast.LENGTH_LONG).show();
                     }
                 });
     }

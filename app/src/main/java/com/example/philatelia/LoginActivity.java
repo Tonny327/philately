@@ -3,6 +3,7 @@ package com.example.philatelia;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -16,6 +17,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
@@ -24,6 +26,7 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.android.gms.common.api.ApiException;
 
 public class LoginActivity extends AppCompatActivity {
+    private static final String TAG = "LoginActivity";
     private EditText etEmail, etPassword;
     private Button btnLogin;
     private TextView btnRegister;
@@ -86,7 +89,10 @@ public class LoginActivity extends AppCompatActivity {
                         startActivity(new Intent(this, MainActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(this, "Ошибка входа: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        Exception e = task.getException();
+                        Log.e(TAG, "Email/password sign-in failed", e);
+                        String msg = (e == null) ? "Неизвестная ошибка" : (e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage()));
+                        Toast.makeText(this, "Ошибка входа: " + msg, Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -109,7 +115,10 @@ public class LoginActivity extends AppCompatActivity {
                     firebaseAuthWithGoogle(account);
                 }
             } catch (ApiException e) {
-                Toast.makeText(this, "Ошибка входа через Google: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                int code = e.getStatusCode();
+                String codeStr = GoogleSignInStatusCodes.getStatusCodeString(code);
+                Log.e(TAG, "Google sign-in failed. code=" + code + " (" + codeStr + ")", e);
+                Toast.makeText(this, "Ошибка входа через Google: " + code + " " + codeStr, Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -124,7 +133,10 @@ public class LoginActivity extends AppCompatActivity {
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(LoginActivity.this, "Ошибка входа через Google: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        Exception e = task.getException();
+                        Log.e(TAG, "Firebase signInWithCredential failed", e);
+                        String msg = (e == null) ? "Неизвестная ошибка" : (e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage()));
+                        Toast.makeText(LoginActivity.this, "Ошибка входа через Google: " + msg, Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -140,7 +152,10 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         Toast.makeText(this, "Письмо для сброса пароля отправлено на " + email, Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(this, "Ошибка: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        Exception e = task.getException();
+                        Log.e(TAG, "Password reset failed", e);
+                        String msg = (e == null) ? "Неизвестная ошибка" : (e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage()));
+                        Toast.makeText(this, "Ошибка: " + msg, Toast.LENGTH_LONG).show();
                     }
                 });
     }

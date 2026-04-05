@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.philatelia.R;
-import com.example.philatelia.helpers.CartManager;
 import com.example.philatelia.models.StampSet;
 
 import java.util.List;
@@ -28,10 +27,23 @@ public class StampSetAdapter extends RecyclerView.Adapter<StampSetAdapter.ViewHo
         void onItemClick(String year);
     }
 
+    /** Добавление в Room-корзину через хост (например, фрагмент с {@code CartViewModel}). */
+    public interface OnAddToCartListener {
+        void onAddStampSetToCart(StampSet stampSet);
+    }
+
+    private final OnAddToCartListener addToCartListener;
+
     public StampSetAdapter(Context context, List<StampSet> stampSets, OnItemClickListener listener) {
+        this(context, stampSets, listener, null);
+    }
+
+    public StampSetAdapter(Context context, List<StampSet> stampSets, OnItemClickListener listener,
+                           OnAddToCartListener addToCartListener) {
         this.context = context;
         this.stampSets = stampSets;
         this.listener = listener;
+        this.addToCartListener = addToCartListener;
     }
 
     @NonNull
@@ -61,9 +73,10 @@ public class StampSetAdapter extends RecyclerView.Adapter<StampSetAdapter.ViewHo
         // ✅ Проверяем, что кнопка не null перед назначением слушателя
         if (holder.addToCartButton != null) {
             holder.addToCartButton.setOnClickListener(v -> {
-                CartManager cartManager = new CartManager(context);
-                cartManager.addStampSetToCart(stampSet);
-                Toast.makeText(context, "Набор добавлен в корзину!", Toast.LENGTH_SHORT).show();
+                if (addToCartListener != null) {
+                    addToCartListener.onAddStampSetToCart(stampSet);
+                    Toast.makeText(context, "Набор добавлен в корзину!", Toast.LENGTH_SHORT).show();
+                }
             });
         }
         holder.itemView.setOnClickListener(v -> listener.onItemClick(stampSet.getYear()));

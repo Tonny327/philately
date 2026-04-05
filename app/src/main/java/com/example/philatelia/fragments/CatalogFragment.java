@@ -14,15 +14,18 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.philatelia.R;
 import com.example.philatelia.adapters.StampAdapter;
-import com.example.philatelia.helpers.CartManager;
-import com.example.philatelia.models.Stamp;
+import com.example.philatelia.data.CartItemEntity;
 import com.example.philatelia.data.StampRepository;
+import com.example.philatelia.helpers.PriceParseUtils;
+import com.example.philatelia.models.Stamp;
+import com.example.philatelia.viewmodels.CartViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -135,12 +138,19 @@ public class CatalogFragment extends Fragment {
     }
 
     private void onAddToCartClick(Stamp stamp) {
-        CartManager cartManager = new CartManager(requireContext());
-        cartManager.addStampToCart(stamp);
-        
-        Toast.makeText(requireContext(), 
-            "🛒 Марка добавлена в корзину!", 
-            Toast.LENGTH_SHORT).show();
+        CartViewModel cartViewModel = new ViewModelProvider(requireActivity()).get(CartViewModel.class);
+        CartItemEntity item = new CartItemEntity();
+        item.title = stamp.getTitle() != null ? stamp.getTitle() : "";
+        item.imageUrl = stamp.getImageUrl() != null ? stamp.getImageUrl() : "";
+        PriceParseUtils.applyPriceFields(item, stamp.getPrice());
+        item.quantity = 1;
+        item.stampId = PriceParseUtils.stableStampId(
+                stamp.getTitle(), stamp.getPrice(), stamp.getImageUrl());
+        cartViewModel.addToCart(item);
+
+        Toast.makeText(requireContext(),
+                "🛒 Марка добавлена в корзину!",
+                Toast.LENGTH_SHORT).show();
     }
 }
 

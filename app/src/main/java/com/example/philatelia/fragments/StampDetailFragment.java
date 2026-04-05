@@ -18,6 +18,7 @@ import androidx.navigation.Navigation;
 import com.bumptech.glide.Glide;
 import com.example.philatelia.R;
 import com.example.philatelia.data.CartItemEntity;
+import com.example.philatelia.helpers.PriceParseUtils;
 import com.example.philatelia.viewmodels.CartViewModel;
 
 import java.util.Random;
@@ -125,18 +126,12 @@ public class StampDetailFragment extends Fragment {
 
             // Добавление в корзину
             CartItemEntity item = new CartItemEntity();
-            item.title = cleanStampTitle(title);
-            item.price = extractPrice(price);
-            
-            try {
-                String priceString = price.replaceAll("[^\\d,.]", "").replace(',', '.');
-                item.priceNum = Double.parseDouble(priceString);
-            } catch (Exception e) {
-                item.priceNum = 0.0;
-            }
-            
+            String cleanedTitle = cleanStampTitle(title);
+            item.title = cleanedTitle;
+            PriceParseUtils.applyPriceFields(item, price);
             item.imageUrl = imageUrl;
             item.quantity = 1;
+            item.stampId = PriceParseUtils.stableStampId(title, price, imageUrl);
             cartViewModel.addToCart(item);
             
             Toast.makeText(requireContext(), "✅ Марка добавлена в корзину", Toast.LENGTH_SHORT).show();

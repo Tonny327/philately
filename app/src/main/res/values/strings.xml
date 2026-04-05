@@ -14,7 +14,7 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
-    <string name="default_web_client_id">1020230572908-l6qlaokuesmpt15mho2of6a4o5b1a7df.apps.googleusercontent.com</string>
+    <string name="default_web_client_id" translatable="false">93438393960-jtno27s0e8fp7pam6nindurjpj97jhmj.apps.googleusercontent.com</string>
     <string name="app_name">Philatelia</string>
     <string name="stamp_image">Изображение марки</string>
     <string name="add_to_cart">Добавить в корзину</string>
@@ -30,4 +30,21 @@
     <string name="poll_count_format">Анкет: %d</string>
     <string name="place_not_available_format">%d. Место - нет данных</string>
     <string name="place_details_format">%d. %s (%d голоса) - %s</string>
+
+    <string name="checkout_payment_title">Способ оплаты</string>
+    <string name="checkout_payment_card">Банковской картой (БПК)</string>
+    <string name="checkout_payment_cash">Наличными</string>
+    <string name="checkout_cancel">Отмена</string>
+    <string name="checkout_cash_confirm_title">Подтверждение</string>
+    <string name="checkout_cash_confirm_message">Оформить заказ на %1$s руб.?</string>
+    <string name="checkout_success">Заказ оформлен</string>
+    <string name="checkout_card_dialog_title">Оплата картой (демо)</string>
+    <string name="checkout_card_pay">Оплатить</string>
+    <string name="checkout_card_number_hint">Номер карты</string>
+    <string name="checkout_card_expiry_hint">Срок MM/YY</string>
+    <string name="checkout_card_cvc_hint">CVC</string>
+    <string name="checkout_validation_card_number">Введите 16 цифр номера карты</string>
+    <string name="checkout_validation_expiry">Укажите срок в формате MM/YY</string>
+    <string name="checkout_validation_cvc">Введите 3 или 4 цифры CVC</string>
+    <string name="cart_total_format">Общая сумма: %1$s руб.</string>
 </resources>
